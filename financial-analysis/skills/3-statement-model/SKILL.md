@@ -1,11 +1,51 @@
 ---
-name: 3-statements
+name: 3-statement-model
 description: Complete, populate and fill out 3-statement financial model templates (Income Statement, Balance Sheet, Cash Flow Statement) . Use when asked to fill out model templates, complete existing model frameworks, populate financial models with data, complete a partially filled IS/BS/CF framework, or link integrated financial statements within an existing template structure. Triggers include requests to fill in, complete, or populate a 3-statement model template
 ---
 
 # 3-Statement Financial Model Template Completion
 
 Complete and populate integrated financial model templates with proper linkages between Income Statement, Balance Sheet, and Cash Flow Statement.
+
+## ⚠️ CRITICAL PRINCIPLES — Read Before Populating Any Template
+
+**Environment — Office JS vs Python:**
+- **If running inside Excel (Office Add-in / Office JS):** Use Office JS directly. Write formulas via `range.formulas = [["=D14*(1+Assumptions!$B$5)"]]` — never `range.values` for derived cells. No separate recalc; Excel computes natively. Use `context.workbook.worksheets.getItem(...)` to navigate tabs.
+- **If generating a standalone .xlsx file:** Use Python/openpyxl. Write `ws["D15"] = "=D14*(1+Assumptions!$B$5)"`, then run `recalc.py` before delivery.
+- **Office JS merged cell pitfall:** Do NOT call `.merge()` then set `.values` on the merged range — throws `InvalidArgument` because the range still reports its pre-merge dimensions. Instead write value to top-left cell alone, then merge + format the full range: `ws.getRange("A1").values = [["INCOME STATEMENT"]]; const h = ws.getRange("A1:G1"); h.merge(); h.format.fill.color = "#1F4E79";`
+- All principles below apply identically in either environment.
+
+**Formulas over hardcodes (non-negotiable):**
+- Every projection cell, roll-forward, linkage, and subtotal MUST be an Excel formula — never a pre-computed value
+- When using Python/openpyxl: write formula strings (`ws["D15"] = "=D14*(1+Assumptions!$B$5)"`), NOT computed results (`ws["D15"] = 12500`)
+- The ONLY cells that should contain hardcoded numbers are: (1) historical actuals, (2) assumption drivers in the Assumptions tab
+- If you find yourself computing a value in Python and writing the result to a cell — STOP. Write the formula instead.
+- Why: the model must flex when scenarios toggle or assumptions change. Hardcodes break every downstream integrity check silently.
+
+**Verify step-by-step with the user:**
+1. **After mapping the template** → show the user which tabs/sections you've identified and confirm before touching any cells
+2. **After populating historicals** → show the user the historical block and confirm values/periods match source data
+3. **After building IS projections** → run the subtotal checks, show the user the projected IS, confirm before moving to BS
+4. **After building BS** → show the user the balance check (Assets = L+E) for every period, confirm before moving to CF
+5. **After building CF** → show the user the cash tie-out (CF ending cash = BS cash), confirm before finalizing
+6. **Do NOT populate the entire model end-to-end and present it complete** — break at each statement, show the work, catch errors early
+
+## Formatting — Professional Blue/Grey Palette (Default unless template/user specifies otherwise)
+
+**Keep colors minimal.** Use only blues and greys for cell fills. Do NOT introduce greens, yellows, oranges, or multiple accent colors — a clean model uses restraint.
+
+| Element | Fill | Font |
+|---|---|---|
+| Section headers (IS / BS / CF titles) | Dark blue `#1F4E79` | White bold |
+| Column headers (FY2024A, FY2025E, etc.) | Light blue `#D9E1F2` | Black bold |
+| Input cells (historicals, assumption drivers) | Light grey `#F2F2F2` or white | Blue `#0000FF` |
+| Formula cells | White | Black |
+| Cross-tab links | White | Green `#008000` |
+| Check rows / key totals | Medium blue `#BDD7EE` | Black bold |
+
+**That's 3 blues + 1 grey + white.** If the template has its own color scheme, follow the template instead.
+
+Font color signals *what* a cell is (input/formula/link). Fill color signals *where* you are (header/data/check).
 
 ## Model Structure
 
